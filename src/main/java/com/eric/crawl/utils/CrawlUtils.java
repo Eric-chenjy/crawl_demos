@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class StringTransfer {
+public class CrawlUtils {
     /**
      * 把从chrome拷贝的requestHearder转换为hashmap
      * @param str 要转换的requestHearder

@@ -1,54 +1,98 @@
 package com.eric.crawl;
 
-import com.eric.crawl.utils.StringTransfer;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.eric.crawl.beans.IndustryDto;
+import com.eric.crawl.utils.CrawlUtils;
+import com.eric.crawl.utils.ExcelWriter;
 import okhttp3.*;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AppMain {
-    public static void main(String[] args) {
-        String requestHeaders = "GET /shakespeare/notes/7755084/included_collections?page=1&count=7 HTTP/1.1\n" +
-                "Host: www.jianshu.com\n" +
-                "Connection: keep-alive\n" +
-                "Pragma: no-cache\n" +
-                "Cache-Control: no-cache\n" +
-                "Accept: application/json\n" +
-                "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\n" +
-                "Sec-Fetch-Site: same-origin\n" +
-                "Sec-Fetch-Mode: cors\n" +
-                "Sec-Fetch-Dest: empty\n" +
-                "Referer: https://www.jianshu.com/p/9aa969dd1b4d\n" +
-                //"Accept-Encoding: gzip, deflate, br\n" +
-                "Accept-Language: zh-CN,zh;q=0.9,zh-TW;q=0.8,en-US;q=0.7,en;q=0.6\n" +
-                "Cookie: _ga=GA1.2.1492798613.1581909568; __gads=ID=5bf9139458c1a0bb-223403b02ac2006f:T=1592812003:RT=1592812003:S=ALNI_MYaLy-J4qthj139K_NP5UyUK1Vntg; __yadk_uid=7nJq5dvmgmAMwQyDifgbeWmjl30RUDnF; locale=zh-CN; _gid=GA1.2.201519707.1601169105; read_mode=day; default_font=font2; Hm_lvt_0c0e9d9b1e7d617b3e6842e85b9fb068=1601023493,1601169105,1601169531,1601169934; Hm_lpvt_0c0e9d9b1e7d617b3e6842e85b9fb068=1601199950; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%2216c5c8094d61ac-0a0b4a62519c71-c343162-1327104-16c5c8094d9a16%22%2C%22%24device_id%22%3A%2216c5c8094d61ac-0a0b4a62519c71-c343162-1327104-16c5c8094d9a16%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_referrer%22%3A%22%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_utm_source%22%3A%22desktop%22%2C%22%24latest_utm_medium%22%3A%22not-signed-in-like-note-btn-in-bottom%22%2C%22%24latest_utm_campaign%22%3A%22maleskine%22%2C%22%24latest_utm_content%22%3A%22note%22%7D%7D; signin_redirect=https://www.jianshu.com/p/9aa969dd1b4d\n";
-        String url = "https://www.jianshu.com/shakespeare/notes/7755084/included_collections?page=1&count=7";
-        HashMap hashMap = StringTransfer.stringToHashMap(requestHeaders);
-        Headers headers = StringTransfer.SetHeaders(hashMap);
-        doGet(headers, url);
-        //doPost();
+    public static void main(String[] args) throws IOException {
+        String requestHeaders = ":authority: www.zhipin.com\n" +
+                ":method: GET\n" +
+                ":path: /wapi/zpCommon/data/oldindustry.json\n" +
+                ":scheme: https\n" +
+                "accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\n" +
+                "accept-encoding: gzip, deflate, br\n" +
+                "accept-language: zh-CN,zh;q=0.9,zh-TW;q=0.8,en-US;q=0.7,en;q=0.6\n" +
+                "cache-control: no-cache\n" +
+                "cookie: lastCity=101010100; sid=sem_pz_bdpc_dasou_title; Hm_lvt_194df3105ad7148dcf2b98a91b5e727a=1601348893; __zp_seo_uuid__=4e6d5cd4-37e0-4fa2-9b04-5110f268f1fc; __g=sem_pz_bdpc_dasou_title; __c=1601348941; __l=l=%2Fwww.zhipin.com%2Fbeijing%2F&r=&g=%2Fwww.zhipin.com%2Fbeijing%2F%3Fsid%3Dsem_pz_bdpc_dasou_title&friend_source=0&friend_source=0; __a=98690315.1572400199.1572400199.1601348941.6.2.2.2; Hm_lpvt_194df3105ad7148dcf2b98a91b5e727a=1601348943\n" +
+                "pragma: no-cache\n" +
+                "sec-fetch-dest: document\n" +
+                "sec-fetch-mode: navigate\n" +
+                "sec-fetch-site: none\n" +
+                "sec-fetch-user: ?1\n" +
+                "upgrade-insecure-requests: 1\n" +
+                "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36\n";
+        String url = "https://www.zhipin.com/wapi/zpCommon/data/oldindustry.json";
+        HashMap hashMap = CrawlUtils.stringToHashMap(requestHeaders);
+        Headers headers = CrawlUtils.SetHeaders(hashMap);
+        ArrayList<IndustryDto> industryDtos = doGet(headers, url);
+        String filePath = "F:\\git_code\\crawl_demos\\files\\test.xlsx";
+        Workbook workbook = ExcelWriter.exportData(industryDtos);
+        FileOutputStream fileOutputStream = null;
+        File file = new File(filePath);
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        fileOutputStream = new FileOutputStream(filePath);
+        workbook.write(fileOutputStream);
+        fileOutputStream.flush();
     }
 
-    private static void doGet(Headers headers, String url) {
+    private static ArrayList<IndustryDto> doGet(Headers headers, String url) throws IOException {
+        final ArrayList<IndustryDto> industryDtolist = new ArrayList<>();
+
         //   获取OkhttpClient对象
         OkHttpClient client = new OkHttpClient();
         //    构建request对象
         Request request = new Request.Builder().get().headers(headers).url(url).build();
         //将request封装为call
         Call call = client.newCall(request);
-        //    异步调用，设置回调函数
-        call.enqueue(new Callback() {
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                System.out.println("失败");
-            }
+        //同步调用
+        Response response = call.execute();
+        String result = response.body().string();
+        JSONArray jsonArray = JSONObject.parseObject(result).getJSONArray("zpData");
 
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                String result = response.body().string();
-                System.out.println(result);
-            }
-        });
+        for (int i = 0; i < jsonArray.size(); i++) {
+            IndustryDto industryDto = new IndustryDto();
+            JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+            industryDto.setCode(jsonObject.getInteger("code"));
+            industryDto.setName(jsonObject.getString("name"));
+            industryDtolist.add(industryDto);}
+        return industryDtolist;
+            //    异步调用，设置回调函数
+            //call.enqueue(new Callback() {
+            //    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            //        System.out.println("失败");
+            //    }
+            //
+            //    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            //        String result = response.body().string();
+            //        JSONArray jsonArray=JSONObject.parseObject(result).getJSONArray("zpData");
+            //
+            //        for (int i=0;i<jsonArray.size();i++){
+            //            IndustryDto industryDto=new IndustryDto();
+            //            JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+            //            industryDto.setCode(jsonObject.getInteger("code"));
+            //            industryDto.setName(jsonObject.getString("name"));
+            //            industryDtolist.add(industryDto);
+            //        }
+            //
+            //    }
+            //});
+
+
+        }
 
     }
-
-}
